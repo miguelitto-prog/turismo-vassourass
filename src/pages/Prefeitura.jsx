@@ -143,16 +143,18 @@ function Brasao({ size = 44 }) {
 // Definições de formulário
 // ---------------------------------------------------------------------------
 const OPCOES = {
-  tipoVisitante: ["Turista (lazer)", "A negócios", "Excursionista (bate-volta)", "Visitando parentes/amigos", "Morador local"],
+  tipoVisitante: ["Turista", "Excursionista (bate-volta)", "Participante de evento/congresso", "Acompanhante de paciente / turismo de saúde", "Outro"],
   faixaEtaria: ["Até 17", "18–24", "25–34", "35–44", "45–59", "60+"],
   genero: ["Feminino", "Masculino", "Outro", "Prefiro não informar"],
-  motivoViagem: ["Turismo histórico/cultural", "Eventos/Congressos", "Turismo religioso", "Gastronomia", "Ecoturismo/Natureza", "Negócios", "Visita a familiares", "Outro"],
+  motivoViagem: ["Turismo histórico/cultural", "Eventos/Congressos", "Turismo de saúde / médico-hospitalar", "Turismo religioso", "Gastronomia", "Ecoturismo/Natureza", "Negócios", "Visita a familiares", "Outro"],
   comQuemViaja: ["Sozinho(a)", "Em casal", "Em família", "Com amigos", "Em grupo organizado/excursão"],
   tipoHospedagem: ["Hotel", "Pousada", "Casa de familiares/amigos", "Airbnb/aluguel por temporada", "Bate-volta (sem pernoite)", "Outro"],
   simNao: ["Sim", "Não"],
+  ondeGastar: ["Alimentação", "Hospedagem", "Compras / artesanato", "Atrativos turísticos", "Transporte local"],
   aquisicaoIngressos: ["Compra no local", "Compra antecipada online", "Incluso em pacote turístico", "Não se aplica"],
-  atrativos: ["Centro Histórico", "Casarões do café", "Igreja Matriz N. Sra. da Conceição", "Museu Casa da Hera", "Praça Barão de Campo Belo", "Centro de Convenções General Sombra", "Trilhas/Turismo rural", "Gastronomia local"],
+  atrativos: ["Museu Casa da Hera", "Museu Vassouras", "Casa de Cultura Cazuza", "Palacete Barão de Itambé", "Igreja Matriz Nossa Senhora da Conceição", "Museu de Arte Sacra da Igreja Matriz", "Cemitério Nossa Senhora da Conceição", "Câmara Municipal de Vassouras", "Estação Ferroviária de Vassouras", "Palacete Barão de Vassouras", "Palacete Barão do Ribeirão", "Centro de Convenções General Sombra", "Observatório Magnético Nacional", "Fazenda São Roque", "Fazenda Santa Eufrásia", "Fazenda da Cachoeira Grande", "Fazenda do Secretário", "Fazenda Cachoeira do Mato Dentro", "Fazenda Mulungu Vermelho", "Fazenda São Luiz da Boa Sorte", "Museu do Café", "Outros"],
   avaliacao: ["1 – Muito ruim", "2 – Ruim", "3 – Regular", "4 – Boa", "5 – Excelente"],
+  comoSoube: ["Indicação de amigos/família", "Redes sociais", "Internet / Google", "Evento", "Outros meios"],
 };
 
 const CAMPOS = {
@@ -168,13 +170,16 @@ const CAMPOS = {
     { id: "tipoHospedagem", label: "Tipo de hospedagem utilizada", type: "select", options: OPCOES.tipoHospedagem },
     { id: "noites", label: "Quantas noites vai permanecer em Vassouras? (0 = bate-volta)", type: "number", placeholder: "0" },
     { id: "gastoDiario", label: "Gasto médio estimado por dia em Vassouras, por pessoa (R$)", type: "number", placeholder: "0,00" },
+    { id: "ondeGastar", label: "Onde você pretende gastar durante a visita?", type: "multi", options: OPCOES.ondeGastar },
     { id: "guiaCredenciado", label: "Esteve acompanhado por Guia de Turismo credenciado?", type: "radio", options: OPCOES.simNao },
     { id: "agenciaReceptivo", label: "Utilizou agência de turismo receptivo para organizar a visita?", type: "radio", options: OPCOES.simNao },
     { id: "aquisicaoIngressos", label: "Para os atrativos pagos, como adquiriu (ou pretende adquirir) os ingressos?", type: "select", options: OPCOES.aquisicaoIngressos },
     { id: "atrativos", label: "Quais atrativos visitou ou pretende visitar?", type: "multi", options: OPCOES.atrativos },
     { id: "avaliacao", label: "Como avalia sua experiência geral em Vassouras?", type: "select", options: OPCOES.avaliacao },
+    { id: "gostou", label: "O que mais gostou na cidade?", type: "textarea", placeholder: "Resposta aberta (opcional)" },
+    { id: "podeMelhorar", label: "O que pode melhorar na experiência turística de Vassouras?", type: "textarea", placeholder: "Resposta aberta (opcional)" },
+    { id: "comoSoube", label: "Como ficou sabendo de Vassouras?", type: "select", options: OPCOES.comoSoube },
     { id: "recomendaria", label: "Recomendaria Vassouras como destino turístico?", type: "radio", options: OPCOES.simNao },
-    { id: "comentario", label: "O que mais gostou, ou o que pode melhorar na cidade?", type: "textarea", placeholder: "Comentário livre (opcional)" },
     { id: "codigoEntrevistador", label: "Código do Entrevistador / Ponto de Coleta", type: "text", placeholder: "Ex: ENT-01 - Praça Matriz" },
   ],
   hospedagem: [
