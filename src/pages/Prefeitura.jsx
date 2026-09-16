@@ -637,21 +637,28 @@ function Dashboard({ dados }) {
 // ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
-export default function Visitantes() {
+export default function Prefeitura() {
+  const [aba, setAba] = useState("dashboard");
   const [carregando, setCarregando] = useState(true);
-  const [totalRegistros, setTotalRegistros] = useState(0);
+  const [dados, setDados] = useState({ visitantes: [], hospedagem: [], eventos: [] });
 
   useEffect(() => {
     (async () => {
-      const v = await carregarLista("vd_visitantes");
-      setTotalRegistros(v.length);
+      const [v, h, e] = await Promise.all([
+        carregarLista("vd_visitantes"),
+        carregarLista("vd_hospedagem"),
+        carregarLista("vd_eventos"),
+      ]);
+      setDados({ visitantes: v, hospedagem: h, eventos: e });
       setCarregando(false);
     })();
   }, []);
 
-  function aoSalvar(_categoriaId, novaLista) {
-    setTotalRegistros(novaLista.length);
+  function aoSalvar(categoriaId, novaLista) {
+    setDados((d) => ({ ...d, [categoriaId]: novaLista }));
   }
+
+  const totalRegistros = dados.visitantes.length + dados.hospedagem.length + dados.eventos.length;
 
   return (
     <div className="vd-root min-h-screen">
@@ -691,37 +698,68 @@ export default function Visitantes() {
               </div>
               <div>
                 <div className="vd-display text-lg leading-none" style={{ color: BRAND.texto }}>Turismo Vassouras</div>
-                <div className="vd-mono text-[10px] mt-1" style={{ color: BRAND.textoSuave }}>Coleta Pública · Pesquisa de Visitantes</div>
+                <div className="vd-mono text-[10px] mt-1 leading-tight" style={{ color: BRAND.textoSuave }}>Painel Interno · Conselho Municipal de Turismo de Vassouras</div>
               </div>
             </div>
+            <nav className="flex gap-1 p-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(247,242,231,0.14)" }}>
+              <button
+                onClick={() => setAba("dashboard")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium vd-focus"
+                style={aba === "dashboard" ? { background: BRAND.verdeVivo, color: "#fff" } : { color: BRAND.textoSuave }}
+              >
+                <LayoutDashboard size={15} /> Painel
+              </button>
+              <button
+                onClick={() => setAba("coletar")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium vd-focus"
+                style={aba === "coletar" ? { background: BRAND.verdeVivo, color: "#fff" } : { color: BRAND.textoSuave }}
+              >
+                <ClipboardList size={15} /> Coletar
+              </button>
+            </nav>
           </div>
         </div>
       </header>
       <div className="h-3" />
 
+
       <main className="max-w-5xl mx-auto px-6 py-10">
         {carregando ? (
-          <div className="py-24 text-center text-sm" style={{ color: BRAND.textoSuave }}>Carregando…</div>
-        ) : (
+          <div className="py-24 text-center text-sm" style={{ color: BRAND.textoSuave }}>Carregando dados…</div>
+        ) : aba === "dashboard" ? (
           <>
-            <div className="mb-8">
-              <h1 className="vd-display text-3xl mb-1" style={{ color: BRAND.texto }}>Pesquisa de turismo</h1>
-              <p className="text-sm" style={{ color: BRAND.textoSuave }}>Conte pra gente como foi sua visita a Vassouras. Leva menos de 2 minutos.</p>
+            <div className="flex items-start justify-between mb-8 flex-wrap gap-3">
+              <div>
+                <h1 className="vd-display text-3xl mb-1" style={{ color: BRAND.texto }}>Panorama do turismo local</h1>
+                <p className="text-sm" style={{ color: BRAND.textoSuave }}>Dados agregados a partir dos registros coletados no app.</p>
+              </div>
               {totalRegistros > 0 && (
-                <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full text-xs vd-mono" style={{ background: `${BRAND.verde}22`, color: BRAND.verde }}>
-                  <TrendingUp size={13} /> {totalRegistros} respostas recebidas até agora
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs vd-mono" style={{ background: `${BRAND.verde}14`, color: BRAND.verde }}>
+                  <TrendingUp size={13} /> {totalRegistros} registros no total
                 </div>
               )}
             </div>
+            <Dashboard dados={dados} />
+          </>
+        ) : (
+          <>
+            <div className="mb-8">
+              <h1 className="vd-display text-3xl mb-1" style={{ color: BRAND.texto }}>Novo registro</h1>
+              <p className="text-sm" style={{ color: BRAND.textoSuave }}>Lançamentos de Hospedagem Mensal e Eventos & Congressos. Os dados de Visitantes são coletados pelo app público.</p>
+            </div>
             <div className="rounded-3xl bg-white p-7 md:p-9" style={{ border: "1px solid rgba(247,242,231,0.14)" }}>
-              <FormularioColeta onSalvo={aoSalvar} categorias={[CATEGORIAS[0]]} categoriaInicial="visitantes" />
+              <FormularioColeta
+                onSalvo={aoSalvar}
+                categorias={CATEGORIAS.filter((c) => c.id !== "visitantes")}
+                categoriaInicial="hospedagem"
+              />
             </div>
           </>
         )}
       </main>
 
       <footer className="max-w-5xl mx-auto px-6 py-8 flex items-center gap-2 text-xs relative" style={{ color: BRAND.textoSuave }}>
-        <Info size={13} /> Suas respostas ajudam o planejamento turístico de Vassouras e não serão usadas para outro fim.
+        <Info size={13} /> Uso interno da Prefeitura de Vassouras. Os dados de Visitantes vêm do app público de coleta.
       </footer>
     </div>
   );
