@@ -1,38 +1,18 @@
-import { useState } from 'react';
-import Visitantes from './pages/Visitantes';
-import Prefeitura from './pages/Prefeitura';
+import { lazy, Suspense } from "react";
+import Visitantes from "./pages/Visitantes";
 
+// O painel só é baixado por quem acessa /painel — a pesquisa pública fica leve.
+const Prefeitura = lazy(() => import("./pages/Prefeitura"));
+
+// /painel (ou o endereço antigo /prefeitura) abre o painel do Conselho.
+// Qualquer outro endereço abre a pesquisa pública de visitantes.
 export default function App() {
-  const [pagina, setPagina] = useState('visitantes');
-
+  const caminho = window.location.pathname.toLowerCase();
+  const ehPainel = caminho.startsWith("/painel") || caminho.startsWith("/prefeitura");
+  if (!ehPainel) return <Visitantes />;
   return (
-    <div className="relative min-h-screen">
-      {/* Botões flutuantes para alternar as abas */}
-      <div className="fixed bottom-4 right-4 z-50 flex gap-2 bg-black/80 backdrop-blur border border-white/20 p-1.5 rounded-full shadow-lg">
-        <button
-          onClick={() => setPagina('visitantes')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-            pagina === 'visitantes'
-              ? 'bg-emerald-600 text-white'
-              : 'text-gray-300 hover:text-white'
-          }`}
-        >
-          Formulário Visitantes
-        </button>
-        <button
-          onClick={() => setPagina('prefeitura')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-            pagina === 'prefeitura'
-              ? 'bg-emerald-600 text-white'
-              : 'text-gray-300 hover:text-white'
-          }`}
-        >
-          Painel Prefeitura
-        </button>
-      </div>
-
-      {/* Renderiza a página ativa */}
-      {pagina === 'visitantes' ? <Visitantes /> : <Prefeitura />}
-    </div>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0A1613" }} />}>
+      <Prefeitura />
+    </Suspense>
   );
 }
