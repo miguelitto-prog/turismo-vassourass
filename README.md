@@ -1,78 +1,57 @@
-# Turismo Vassouras — Prefeitura & Visitantes
+# Turismo Vassouras — Pesquisa de Visitantes e Painel do Conselho
 
-Dois formulários (app da Prefeitura e app de Visitantes) que agora
-funcionam como um site normal, hospedado na Vercel, com os dados
-salvos em um banco Supabase (em vez do `window.storage`, que só
-existe dentro do Claude.ai).
+Site do Conselho Municipal de Turismo de Vassouras, hospedado na Vercel,
+com os dados salvos no Supabase.
 
-- `/visitantes` → formulário público de pesquisa de turismo
-- `/prefeitura` → painel interno (hospedagem mensal e eventos), que
-  também lê os registros enviados pelos visitantes
+- `/` → **pesquisa pública de visitantes** (anônima)
+- `/painel` → **painel do Conselho** (exige login). O endereço antigo
+  `/prefeitura` continua funcionando.
 
-## Passo a passo para publicar
+## O que o painel faz
 
-### 1. Criar o banco no Supabase (grátis)
+- **Painel**: indicadores (visitantes, gasto médio por pessoa, ocupação
+  média, público em eventos) e gráficos do perfil do visitante.
+- **Lançamentos**: ocupação mensal dos hotéis/pousadas e números dos eventos.
+- **Cadastros**: atrativos, hotéis/pousadas e eventos. O que for cadastrado
+  aparece sozinho nas opções da pesquisa e nas páginas do site.
+- **Exportar Excel**: baixa uma planilha com todas as respostas,
+  lançamentos, cadastros e a lista de e-mails.
 
-1. Crie uma conta em https://supabase.com e um novo projeto.
-2. Vá em **SQL Editor → New query**, cole o conteúdo do arquivo
-   `supabase.sql` (na raiz deste projeto) e clique em **Run**.
-3. Vá em **Project Settings → API** e copie:
-   - **Project URL** → isso é o `VITE_SUPABASE_URL`
-   - **anon public key** → isso é o `VITE_SUPABASE_ANON_KEY`
+## Links da pesquisa com QR code
 
-### 2. Subir este projeto para o GitHub
+Acrescente parâmetros ao endereço para identificar onde a pesquisa foi aplicada:
 
-**Opção fácil (sem instalar nada), pelo navegador:**
-1. Crie um repositório novo em https://github.com/new (pode ser
-   privado).
-2. Na página do repositório, clique em **uploading an existing
-   file** e arraste todos os arquivos desta pasta (menos as pastas
-   `node_modules` e `dist`, que não devem existir aqui).
-3. Confirme o commit.
+- `?ponto=Praca-Matriz` → registra o ponto de coleta (o campo some do formulário)
+- `?evento=Nome do evento` → já deixa o evento marcado
 
-**Opção com git instalado:**
-```bash
-cd vassouras-turismo
-git init
-git add .
-git commit -m "Primeira versão"
-git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/SEU-REPO.git
-git push -u origin main
-```
+Exemplo: `https://SEU-PROJETO.vercel.app/?ponto=Festival-2026&evento=Festival%20Vale%20do%20Café`
 
-### 3. Importar na Vercel
+## Configuração (uma vez)
 
-1. Crie uma conta em https://vercel.com (pode entrar com GitHub).
-2. Clique em **Add New → Project** e selecione o repositório que
-   você acabou de criar.
-3. A Vercel detecta automaticamente que é um projeto Vite — não
-   precisa mudar nada no build.
-4. Antes de clicar em **Deploy**, abra **Environment Variables** e
-   adicione:
-   - `VITE_SUPABASE_URL` = (o Project URL do passo 1)
-   - `VITE_SUPABASE_ANON_KEY` = (a anon key do passo 1)
-5. Clique em **Deploy**. Em ~1 minuto o site estará no ar.
+### 1. Banco de dados
 
-Depois do deploy, os links finais serão:
-- `https://SEU-PROJETO.vercel.app/visitantes`
-- `https://SEU-PROJETO.vercel.app/prefeitura`
+No Supabase, abra **SQL Editor → New query**, cole todo o conteúdo de
+`supabase.sql` e clique em **Run**. O script cria a tabela de e-mails e troca
+as regras de acesso: visitantes só conseguem enviar respostas; ler e editar
+os dados exige login.
+
+### 2. Usuários do painel
+
+1. **Authentication → Users → Add user → Create new user**: informe e-mail
+   e senha de cada conselheiro (marque *Auto Confirm User*).
+2. **Authentication → Sign In / Providers**: desligue
+   **Allow new users to sign up**. Sem isso, qualquer pessoa conseguiria
+   criar uma conta e ver os dados.
+
+### 3. Vercel
+
+As variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` continuam as
+mesmas (Project Settings → Environment Variables).
 
 ## Rodando localmente (opcional)
 
 ```bash
 npm install
-cp .env.example .env   # depois edite .env com suas chaves do Supabase
+cp env.example .env   # depois edite .env com suas chaves do Supabase
 npm run dev
 ```
-
-## Observação sobre segurança
-
-As políticas do Supabase em `supabase.sql` liberam leitura e escrita
-públicas na tabela `kv_store` (necessário para o formulário público
-funcionar sem login). Isso significa que, tecnicamente, qualquer
-pessoa com a `anon key` (que fica visível no código do site) poderia
-enviar ou alterar registros diretamente pela API do Supabase. Para
-um uso interno da Prefeitura, isso costuma ser aceitável, mas se
-quiser reforçar a segurança no futuro, dá para adicionar autenticação
-ao painel `/prefeitura` e restringir as políticas de escrita.
