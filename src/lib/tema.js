@@ -82,6 +82,17 @@ export const STYLE_TAG = `
     text-align: left;
   }
   .vd-chip[data-active="true"] { border-color: transparent; color: #fff; }
+  .vd-multiselect { position: relative; }
+  .vd-multiselect-botao { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; text-align: left; }
+  .vd-multiselect-placeholder { color: #8A8578; }
+  .vd-multiselect-painel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: #fff; border: 1.5px solid #E3D9CC; border-radius: 12px; max-height: 280px; overflow-y: auto; box-shadow: 0 12px 28px rgba(0,0,0,0.28); padding: 6px; }
+  .vd-multiselect-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; color: ${BRAND.grafite}; }
+  .vd-multiselect-item:hover { background: #F7F2E7; }
+  .vd-multiselect-item input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .vd-multiselect-check { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #CBBFA9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #fff; }
+  .vd-multiselect-item[data-active="true"] .vd-multiselect-check { background: ${BRAND.azul}; border-color: ${BRAND.azul}; }
+  .vd-multiselect-rodape { display: flex; justify-content: flex-end; padding: 6px 4px 2px; border-top: 1px solid #EFE9DC; margin-top: 4px; }
+  .vd-multiselect-fechar { font-size: 13px; font-weight: 600; color: ${BRAND.azul}; background: none; border: none; cursor: pointer; padding: 6px 8px; }
   .vd-root .bg-white {
     background: ${BRAND.vidro} !important;
     backdrop-filter: blur(16px);
