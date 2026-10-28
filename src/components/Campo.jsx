@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import { BRAND } from "../lib/tema";
 
 export const UFS = [
@@ -62,6 +63,68 @@ function Chips({ options, ativo, onToggle, cor }) {
   );
 }
 
+// Dropdown fechado que abre uma lista com caixinhas de marcar — usado nas
+// perguntas de múltipla escolha, para não espalhar dezenas de botões na tela.
+function DropdownMulti({ options, valor, onToggle, label }) {
+  const [aberto, setAberto] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function aoClicarFora(e) {
+      if (ref.current && !ref.current.contains(e.target)) setAberto(false);
+    }
+    function aoTeclar(e) {
+      if (e.key === "Escape") setAberto(false);
+    }
+    document.addEventListener("mousedown", aoClicarFora);
+    document.addEventListener("keydown", aoTeclar);
+    return () => {
+      document.removeEventListener("mousedown", aoClicarFora);
+      document.removeEventListener("keydown", aoTeclar);
+    };
+  }, []);
+
+  const n = valor.length;
+  const resumo = n === 0 ? "Selecione…" : n === 1 ? valor[0] : `${n} selecionados`;
+
+  return (
+    <div className="vd-multiselect" ref={ref}>
+      <button
+        type="button"
+        className="vd-input vd-focus vd-multiselect-botao"
+        aria-haspopup="listbox"
+        aria-expanded={aberto}
+        aria-label={label}
+        onClick={() => setAberto((a) => !a)}
+      >
+        <span className={n ? "" : "vd-multiselect-placeholder"}>{resumo}</span>
+        <ChevronDown size={18} style={{ flexShrink: 0, opacity: 0.6 }} />
+      </button>
+      {aberto && (
+        <div className="vd-multiselect-painel" role="listbox" aria-multiselectable="true">
+          {options.map((o) => {
+            const on = valor.includes(o);
+            return (
+              <label key={o} className="vd-multiselect-item" data-active={on}>
+                <input type="checkbox" checked={on} onChange={() => onToggle(o)} />
+                <span className="vd-multiselect-check" aria-hidden="true">
+                  {on && <Check size={12} color="#fff" strokeWidth={3} />}
+                </span>
+                <span>{o}</span>
+              </label>
+            );
+          })}
+          <div className="vd-multiselect-rodape">
+            <button type="button" className="vd-multiselect-fechar" onClick={() => setAberto(false)}>
+              Pronto
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * Renderiza um campo a partir da sua definição.
  * Tipos: text, email, number, date, month, textarea, select, radio, multi, moeda, municipio
@@ -103,7 +166,7 @@ export function Campo({ campo, valor, onChange, dados, set, erro, options }) {
     const toggle = (o) => onChange(arr.includes(o) ? arr.filter((x) => x !== o) : [...arr, o]);
     return (
       <>
-        <Chips options={opcoes} ativo={(o) => arr.includes(o)} onToggle={toggle} cor={BRAND.azul} />
+        <DropdownMulti options={opcoes} valor={arr} onToggle={toggle} label={campo.label} />
         {textoOutro}
       </>
     );
