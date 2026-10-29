@@ -16,6 +16,20 @@ import {
 import { Campo, formatarReais } from "../components/Campo";
 
 const CARTAO = { border: "1px solid rgba(247,242,231,0.14)" };
+
+// true em telas de celular (até 767px) — usado nos gráficos e tabelas.
+const CONSULTA_CELULAR = "(max-width: 767px)";
+function useCelular() {
+  const [celular, setCelular] = useState(() => typeof window !== "undefined" && window.matchMedia(CONSULTA_CELULAR).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(CONSULTA_CELULAR);
+    const aoMudar = () => setCelular(mq.matches);
+    mq.addEventListener("change", aoMudar);
+    return () => mq.removeEventListener("change", aoMudar);
+  }, []);
+  return celular;
+}
+const encurtar = (t, n) => (String(t).length > n ? `${String(t).slice(0, n - 1)}…` : t);
 const TOOLTIP = { borderRadius: 10, border: "1px solid rgba(14,22,19,0.15)", fontSize: 12, color: BRAND.grafite };
 
 // ---------------------------------------------------------------------------
@@ -37,7 +51,7 @@ function Login() {
   }
 
   return (
-    <div className="max-w-sm mx-auto rounded-3xl bg-white p-8" style={CARTAO}>
+    <div className="max-w-sm mx-auto rounded-3xl bg-white p-6 sm:p-8" style={CARTAO}>
       <h1 className="vd-display text-2xl mb-1">Painel do Conselho</h1>
       <p className="text-sm mb-6" style={{ color: BRAND.textoSuave }}>Acesso restrito aos conselheiros.</p>
       <form onSubmit={entrar} className="space-y-4">
@@ -90,12 +104,12 @@ function origemUf(r) {
 // ---------------------------------------------------------------------------
 function KpiCard({ icon: Icone, label, valor, sub, cor }) {
   return (
-    <div className="rounded-2xl p-5 bg-white flex flex-col gap-3" style={CARTAO}>
+    <div className="vd-kpi rounded-2xl p-4 sm:p-5 bg-white flex flex-col gap-3" style={CARTAO}>
       <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `${cor}26` }}>
         <Icone size={17} color={cor} />
       </div>
       <div>
-        <div className="vd-display text-3xl leading-none">{valor}</div>
+        <div className="vd-display text-2xl sm:text-3xl leading-none break-words">{valor}</div>
         <div className="text-xs mt-1.5" style={{ color: BRAND.textoSuave }}>{label}</div>
       </div>
       {sub && <div className="text-[11px]" style={{ color: BRAND.textoSuave }}>{sub}</div>}
@@ -113,22 +127,24 @@ function EstadoVazio({ texto }) {
 }
 
 function GraficoBarras({ titulo, dados, cor, horizontal = false, altura = 240, maximo }) {
+  const celular = useCelular();
+  const larguraRotulo = celular ? 112 : 150;
   return (
-    <div className="rounded-2xl p-5 bg-white" style={CARTAO}>
+    <div className="rounded-2xl p-4 sm:p-5 bg-white min-w-0" style={CARTAO}>
       <p className="text-xs font-medium mb-3" style={{ color: BRAND.textoSuave }}>{titulo}</p>
       {!dados.length ? <p className="text-xs py-8 text-center" style={{ color: BRAND.textoSuave }}>Sem respostas ainda.</p> : (
         <ResponsiveContainer width="100%" height={altura}>
           {horizontal ? (
-            <BarChart data={dados} layout="vertical" margin={{ left: 10, right: 16 }}>
+            <BarChart data={dados} layout="vertical" margin={{ left: celular ? 0 : 10, right: 12 }}>
               <XAxis type="number" hide allowDecimals={false} domain={[0, maximo || "auto"]} />
-              <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 11, fill: BRAND.textoSuave }} />
+              <YAxis type="category" dataKey="name" width={larguraRotulo} tick={{ fontSize: celular ? 10 : 11, fill: BRAND.textoSuave }} tickFormatter={(t) => encurtar(t, celular ? 18 : 26)} />
               <Tooltip contentStyle={TOOLTIP} />
               <Bar dataKey="value" name={maximo ? "Ocupação (%)" : "Respostas"} radius={[0, 6, 6, 0]} fill={cor} maxBarSize={34} />
             </BarChart>
           ) : (
             <BarChart data={dados} margin={{ left: -20 }}>
               <CartesianGrid vertical={false} stroke="rgba(247,242,231,0.14)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: BRAND.textoSuave }} interval={0} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: BRAND.textoSuave }} interval={0} tickFormatter={(t) => encurtar(t, celular ? 6 : 14)} />
               <YAxis tick={{ fontSize: 11, fill: BRAND.textoSuave }} allowDecimals={false} />
               <Tooltip contentStyle={TOOLTIP} />
               <Bar dataKey="value" name="Respostas" radius={[6, 6, 0, 0]} fill={cor} maxBarSize={56} />
@@ -141,13 +157,14 @@ function GraficoBarras({ titulo, dados, cor, horizontal = false, altura = 240, m
 }
 
 function GraficoPizza({ titulo, dados, cores }) {
+  const celular = useCelular();
   return (
-    <div className="rounded-2xl p-5 bg-white" style={CARTAO}>
+    <div className="rounded-2xl p-4 sm:p-5 bg-white min-w-0" style={CARTAO}>
       <p className="text-xs font-medium mb-3" style={{ color: BRAND.textoSuave }}>{titulo}</p>
       {!dados.length ? <p className="text-xs py-8 text-center" style={{ color: BRAND.textoSuave }}>Sem respostas ainda.</p> : (
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={celular ? 260 : 240}>
           <PieChart>
-            <Pie data={dados} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={2}>
+            <Pie data={dados} dataKey="value" nameKey="name" cx="50%" cy={celular ? "42%" : "50%"} innerRadius={celular ? 40 : 45} outerRadius={celular ? 70 : 80} paddingAngle={2}>
               {dados.map((d, i) => <Cell key={d.name} fill={cores ? cores(d, i) : CORES_GRAFICO[i % CORES_GRAFICO.length]} />)}
             </Pie>
             <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -197,8 +214,8 @@ function Dashboard({ dados }) {
     .slice(-12).reverse();
 
   return (
-    <div className="space-y-10">
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="space-y-8 sm:space-y-10">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <KpiCard icon={Users} label="Visitantes registrados" valor={visitantes.length} sub={visitantes.length ? `${noitesMedia.toFixed(1)} noites em média` : null} cor={BRAND.verdeVivo} />
         <KpiCard icon={Wallet} label="Gasto médio por pessoa / dia" valor={gastoDia ? formatarReais(gastoDia).replace(",00", "") : "—"} sub={respondeuGasto ? `${respondeuGasto} informaram valor` : null} cor={BRAND.coral} />
         <KpiCard icon={Wallet} label="Gasto médio por pessoa / visita" valor={gastoVisita ? formatarReais(gastoVisita).replace(",00", "") : "—"} sub="gasto diário × noites (mín. 1 dia)" cor={BRAND.ambar} />
@@ -209,7 +226,7 @@ function Dashboard({ dados }) {
       <section>
         <h3 className="vd-display text-xl mb-4">Perfil dos visitantes</h3>
         {!visitantes.length ? <EstadoVazio texto="Ainda não há respostas da pesquisa. Assim que chegarem, os gráficos aparecem aqui." /> : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
             <GraficoBarras titulo="Estado de origem" dados={origem} cor={BRAND.verdeVivo} />
             <GraficoBarras titulo="Municípios de origem (top 8)" dados={municipios} cor={BRAND.verdeVivo} horizontal />
             <GraficoBarras titulo="Faixa etária" dados={idades} cor={BRAND.azul} />
@@ -229,7 +246,17 @@ function Dashboard({ dados }) {
       {abertas.length > 0 && (
         <section>
           <h3 className="vd-display text-xl mb-4">Respostas abertas mais recentes</h3>
-          <div className="rounded-2xl bg-white overflow-x-auto" style={CARTAO}>
+          <ul className="md:hidden space-y-3">
+            {abertas.map((v) => (
+              <li key={v.id} className="rounded-2xl bg-white p-4 text-sm space-y-2" style={CARTAO}>
+                <div className="text-xs" style={{ color: BRAND.textoSuave }}>{v.timestamp ? new Date(v.timestamp).toLocaleDateString("pt-BR") : "—"}</div>
+                {v.gostou && <p><span className="text-xs block" style={{ color: BRAND.textoSuave }}>Gostou</span>{v.gostou}</p>}
+                {v.podeMelhorar && <p><span className="text-xs block" style={{ color: BRAND.textoSuave }}>Pode melhorar</span>{v.podeMelhorar}</p>}
+                {[v.motivoViagemOutro && `Motivo: ${v.motivoViagemOutro}`, v.comoSoubeOutro && `Soube por: ${v.comoSoubeOutro}`, v.atrativosOutro && `Atrativo: ${v.atrativosOutro}`].filter(Boolean).map((t) => <p key={t} className="text-xs">{t}</p>)}
+              </li>
+            ))}
+          </ul>
+          <div className="hidden md:block rounded-2xl bg-white overflow-x-auto" style={CARTAO}>
             <table className="w-full text-sm vd-tabela">
               <thead><tr style={{ background: "rgba(255,255,255,0.06)" }}>
                 {["Data", "O que mais gostou", "O que pode melhorar", "Respostas “Outro”"].map((h) => <th key={h} className="text-xs font-medium" style={{ color: BRAND.textoSuave }}>{h}</th>)}
@@ -259,7 +286,21 @@ function Dashboard({ dados }) {
       <section>
         <h3 className="vd-display text-xl mb-4">Eventos e congressos</h3>
         {!eventos.length ? <EstadoVazio texto="Nenhum evento lançado. Use a aba Lançamentos." /> : (
-          <div className="rounded-2xl bg-white overflow-x-auto" style={CARTAO}>
+          <>
+          <ul className="md:hidden space-y-3">
+            {eventos.map((e, i) => (
+              <li key={i} className="rounded-2xl bg-white p-4 text-sm" style={CARTAO}>
+                <div className="font-medium mb-2">{e.nomeEvento || "—"}</div>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                  <dt style={{ color: BRAND.textoSuave }}>Início</dt><dd>{e.dataInicio ? e.dataInicio.split("-").reverse().join("/") : "—"}</dd>
+                  <dt style={{ color: BRAND.textoSuave }}>Público</dt><dd>{e.publicoTotal || "—"}</dd>
+                  <dt style={{ color: BRAND.textoSuave }}>% de fora</dt><dd>{e.percentualForaVassouras ? `${e.percentualForaVassouras}%` : "—"}</dd>
+                  <dt style={{ color: BRAND.textoSuave }}>Centro de Convenções</dt><dd>{e.usouCentroConvencoes || "—"}</dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden md:block rounded-2xl bg-white overflow-x-auto" style={CARTAO}>
             <table className="w-full text-sm vd-tabela">
               <thead><tr style={{ background: "rgba(255,255,255,0.06)" }}>
                 {["Evento", "Início", "Público", "% de fora", "Centro de Convenções"].map((h) => <th key={h} className="text-xs font-medium" style={{ color: BRAND.textoSuave }}>{h}</th>)}
@@ -277,6 +318,7 @@ function Dashboard({ dados }) {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
     </div>
@@ -352,8 +394,8 @@ function Lancamentos({ cadastros, onSalvo }) {
   const semOpcoes = campos[0].options.length === 0;
 
   return (
-    <div className="rounded-3xl bg-white p-7 md:p-9" style={CARTAO}>
-      <div className="flex gap-2 flex-wrap mb-7">
+    <div className="rounded-3xl bg-white p-5 sm:p-7 md:p-9" style={CARTAO}>
+      <div className="flex gap-2 flex-wrap mb-6 sm:mb-7">
         {[["hospedagem", "Hospedagem mensal", Building2, BRAND.coral], ["eventos", "Eventos e congressos", PartyPopper, BRAND.azul]].map(([id, label, Icone, cor]) => (
           <button key={id} type="button" className="vd-chip vd-focus flex items-center gap-2" data-active={tipo === id} style={tipo === id ? { background: cor } : {}} onClick={() => setTipo(id)}>
             <Icone size={15} /> {label}
@@ -364,7 +406,7 @@ function Lancamentos({ cadastros, onSalvo }) {
         <EstadoVazio texto={`Cadastre ${tipo === "hospedagem" ? "hotéis e pousadas" : "eventos"} na aba Cadastros antes de fazer lançamentos.`} />
       ) : (
         <>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-5 sm:gap-6">
             {campos.map((c) => (
               <div key={c.id}>
                 <label htmlFor={c.id} className="block text-sm font-medium mb-2">{c.label}{c.required && <span style={{ color: BRAND.coral }}> *</span>}</label>
@@ -372,9 +414,9 @@ function Lancamentos({ cadastros, onSalvo }) {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between gap-3 mt-8 pt-6" style={{ borderTop: "1px solid rgba(247,242,231,0.14)" }}>
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 mt-8 pt-6" style={{ borderTop: "1px solid rgba(247,242,231,0.14)" }}>
             <span className="text-sm" role="status">{msg}</span>
-            <button type="button" className="vd-btn text-white vd-focus" style={{ background: BRAND.verdeVivo }} disabled={salvando} onClick={salvar}>
+            <button type="button" className="vd-btn text-white vd-focus justify-center vd-btn-grande" style={{ background: BRAND.verdeVivo }} disabled={salvando} onClick={salvar}>
               {salvando ? "Salvando…" : <>Salvar lançamento <Check size={16} /></>}
             </button>
           </div>
@@ -483,21 +525,21 @@ function Cadastros({ cadastros, setCadastros }) {
       <p className="text-sm max-w-2xl" style={{ color: BRAND.textoSuave }}>
         O que for cadastrado aqui aparece automaticamente nas opções da pesquisa e nas páginas do site. Itens ocultos saem da pesquisa e do site, mas continuam no histórico.
       </p>
-      <div className="flex gap-2 flex-wrap">
+      <div className="vd-rolagem-x flex gap-2">
         {Object.entries(DEF_CADASTROS).map(([id, d]) => (
-          <button key={id} type="button" className="vd-chip vd-focus" data-active={tipo === id} style={tipo === id ? { background: BRAND.verdeVivo } : {}} onClick={() => { setTipo(id); setEditando(null); setMsg(""); }}>
+          <button key={id} type="button" className="vd-chip vd-focus shrink-0 whitespace-nowrap" data-active={tipo === id} style={tipo === id ? { background: BRAND.verdeVivo } : {}} onClick={() => { setTipo(id); setEditando(null); setMsg(""); }}>
             {d.titulo} ({cadastros[id].length})
           </button>
         ))}
       </div>
 
       {editando ? (
-        <div className="rounded-3xl bg-white p-7" style={CARTAO}>
+        <div className="rounded-3xl bg-white p-5 sm:p-7" style={CARTAO}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="vd-display text-xl">{editando === "novo" ? `Novo ${def.singular}` : `Editar ${def.singular}`}</h3>
-            <button type="button" className="vd-focus p-1" aria-label="Fechar" onClick={() => setEditando(null)}><X size={18} /></button>
+            <button type="button" className="vd-focus vd-icone-btn" aria-label="Fechar" onClick={() => setEditando(null)}><X size={18} /></button>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-5 sm:gap-6">
             {def.campos.map((c) => (
               <div key={c.id} className={c.type === "textarea" ? "md:col-span-2" : ""}>
                 <label htmlFor={c.id} className="block text-sm font-medium mb-2">{c.label}{c.required && <span style={{ color: BRAND.coral }}> *</span>}</label>
@@ -505,23 +547,39 @@ function Cadastros({ cadastros, setCadastros }) {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between gap-3 mt-8">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 mt-8">
             <span className="text-sm" role="status">{msg}</span>
-            <button type="button" className="vd-btn text-white vd-focus" style={{ background: BRAND.verdeVivo }} disabled={salvando} onClick={salvarItem}>
+            <button type="button" className="vd-btn text-white vd-focus justify-center vd-btn-grande" style={{ background: BRAND.verdeVivo }} disabled={salvando} onClick={salvarItem}>
               {salvando ? "Salvando…" : <>Salvar <Check size={16} /></>}
             </button>
           </div>
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-sm" role="status">{msg}</span>
-            <button type="button" className="vd-btn text-white vd-focus" style={{ background: BRAND.verdeVivo }} onClick={() => abrir(null)}>
+            <button type="button" className="vd-btn text-white vd-focus justify-center vd-btn-grande" style={{ background: BRAND.verdeVivo }} onClick={() => abrir(null)}>
               <Plus size={16} /> Cadastrar {def.singular}
             </button>
           </div>
           {!itens.length ? <EstadoVazio texto={`Nenhum ${def.singular} cadastrado ainda.`} /> : (
-            <div className="rounded-2xl bg-white overflow-x-auto" style={CARTAO}>
+            <>
+            <ul className="md:hidden rounded-2xl bg-white vd-lista-cel" style={CARTAO}>
+              {itens.map((i) => (
+                <li key={i.id} className="flex items-center gap-2 py-3 pl-4 pr-2" style={{ opacity: i.ativo ? 1 : 0.5 }}>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium break-words">{i.nome}{!i.ativo && <span className="text-xs font-normal" style={{ color: BRAND.textoSuave }}> (oculto)</span>}</div>
+                    <div className="text-xs mt-0.5" style={{ color: BRAND.textoSuave }}>{def.colunas(i).join(" · ")}</div>
+                  </div>
+                  <div className="flex shrink-0">
+                    <button type="button" className="vd-icone-btn vd-focus" aria-label={`Editar ${i.nome}`} onClick={() => abrir(i)}><Pencil size={17} /></button>
+                    <button type="button" className="vd-icone-btn vd-focus" aria-label={`${i.ativo ? "Ocultar" : "Mostrar"} ${i.nome}`} onClick={() => alternar(i)} disabled={salvando}>{i.ativo ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                    <button type="button" className="vd-icone-btn vd-focus" aria-label={`Excluir ${i.nome}`} onClick={() => remover(i)} disabled={salvando}><Trash2 size={17} /></button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden md:block rounded-2xl bg-white overflow-x-auto" style={CARTAO}>
               <table className="w-full text-sm vd-tabela">
                 <tbody>
                   {itens.map((i) => (
@@ -538,6 +596,7 @@ function Cadastros({ cadastros, setCadastros }) {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </>
       )}
@@ -595,6 +654,40 @@ async function exportarExcel(dados, cadastros) {
 }
 
 // ---------------------------------------------------------------------------
+// Estilos do painel no celular
+// ---------------------------------------------------------------------------
+const ESTILO_PAINEL = `
+  .vd-cabecalho { top: calc(env(safe-area-inset-top, 0px) + 8px); }
+  .vd-brasao { width: 44px; height: 44px; }
+  .vd-icone-btn { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: none; border: none; color: inherit; cursor: pointer; }
+  .vd-icone-btn:disabled { opacity: .5; }
+  .vd-rolagem-x { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-left: -16px; margin-right: -16px; padding: 0 16px 2px; }
+  .vd-rolagem-x::-webkit-scrollbar { display: none; }
+  .vd-lista-cel li + li { border-top: 1px solid rgba(247,242,231,0.12); }
+  .vd-abas-cel {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    background: rgba(4,12,10,0.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(247,242,231,0.14);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .vd-abas-cel button {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    min-height: 58px; font-size: 11px; font-weight: 500; background: none; border: none;
+    color: ${BRAND.textoSuave}; cursor: pointer;
+  }
+  .vd-abas-cel button[data-active="true"] { color: #fff; }
+  .vd-abas-cel button[data-active="true"] svg { color: ${BRAND.ambar}; }
+  @media (max-width: 767px) {
+    .vd-brasao { width: 36px; height: 36px; }
+    .vd-btn-cabecalho { padding: 9px 11px; }
+    .vd-btn-grande { width: 100%; padding: 12px 16px; font-size: 15px; }
+    .vd-rodape { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+    .vd-kpi:last-child:nth-child(odd) { grid-column: span 2; }
+  }
+`;
+
+// ---------------------------------------------------------------------------
 // Página
 // ---------------------------------------------------------------------------
 export default function Prefeitura() {
@@ -609,6 +702,7 @@ export default function Prefeitura() {
   return (
     <div className="vd-root min-h-screen">
       <style>{STYLE_TAG}</style>
+      <style>{ESTILO_PAINEL}</style>
       <div className="vd-bg-photo" aria-hidden="true" />
       <div className="vd-bg-veil" aria-hidden="true" />
       {sessao === undefined ? (
@@ -659,44 +753,56 @@ function PainelLogado({ email }) {
 
   return (
     <>
-      <header className="sticky top-3 z-20 rounded-2xl" style={{ background: "rgba(4,12,10,0.6)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", border: "1px solid rgba(247,242,231,0.12)", maxWidth: "min(72rem, calc(100% - 24px))", margin: "12px auto 0" }}>
-        <div className="px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full overflow-hidden shrink-0" style={{ width: 44, height: 44, border: "2px solid rgba(247,242,231,0.35)" }}>
+      <header className="vd-cabecalho sticky z-20 rounded-2xl" style={{ background: "rgba(4,12,10,0.6)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", border: "1px solid rgba(247,242,231,0.12)", maxWidth: "min(72rem, calc(100% - 24px))", margin: "12px auto 0" }}>
+        <div className="px-3 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="rounded-full overflow-hidden shrink-0 vd-brasao" style={{ border: "2px solid rgba(247,242,231,0.35)" }}>
               <img src={BRASAO_IMG} alt="" className="w-full h-full object-cover block" />
             </div>
-            <div>
-              <div className="vd-display text-lg leading-none">Painel do Conselho</div>
-              <div className="text-[11px] mt-1" style={{ color: BRAND.textoSuave }}>Conselho Municipal de Turismo de Vassouras</div>
+            <div className="min-w-0">
+              <div className="vd-display text-base sm:text-lg leading-none">Painel do Conselho</div>
+              <div className="text-[11px] mt-1 truncate" style={{ color: BRAND.textoSuave }}>
+                <span className="sm:hidden">COMTUR Vassouras</span>
+                <span className="hidden sm:inline">Conselho Municipal de Turismo de Vassouras</span>
+              </div>
             </div>
           </div>
-          <nav className="flex gap-1 p-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(247,242,231,0.14)" }}>
+          <nav className="hidden md:flex gap-1 p-1 rounded-full" aria-label="Seções do painel" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(247,242,231,0.14)" }}>
             {abas.map(([id, label, Icone]) => (
               <button key={id} type="button" onClick={() => setAba(id)} className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium vd-focus" style={aba === id ? { background: BRAND.verdeVivo, color: "#fff" } : { color: BRAND.textoSuave }} aria-current={aba === id ? "page" : undefined}>
                 <Icone size={15} /> {label}
               </button>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
-            <button type="button" className="vd-btn vd-btn-sec vd-focus" onClick={exportar} disabled={carregando || exportando || !cadastros}>
-              <Download size={15} /> {exportando ? "Gerando…" : "Exportar Excel"}
+          <div className="flex items-center gap-2 shrink-0">
+            <button type="button" className="vd-btn vd-btn-sec vd-focus vd-btn-cabecalho" onClick={exportar} disabled={carregando || exportando || !cadastros} aria-label="Exportar Excel">
+              <Download size={15} /> <span className="hidden sm:inline">{exportando ? "Gerando…" : "Exportar Excel"}</span>
             </button>
-            <button type="button" className="vd-btn vd-btn-sec vd-focus" onClick={() => supabase.auth.signOut()} title={email}>
-              <LogOut size={15} /> Sair
+            <button type="button" className="vd-btn vd-btn-sec vd-focus vd-btn-cabecalho" onClick={() => supabase.auth.signOut()} title={email} aria-label="Sair">
+              <LogOut size={15} /> <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-5 py-10">
+      <nav className="vd-abas-cel md:hidden" aria-label="Seções do painel">
+        {abas.map(([id, label, Icone]) => (
+          <button key={id} type="button" onClick={() => { setAba(id); window.scrollTo({ top: 0 }); }} className="vd-focus" data-active={aba === id} aria-current={aba === id ? "page" : undefined}>
+            <Icone size={20} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-5 py-6 sm:py-10">
         {erro && <p className="mb-6 text-sm px-4 py-3 rounded-xl" role="alert" style={{ background: "rgba(253,111,89,0.16)", color: "#FFD3CB" }}>{erro}</p>}
         {carregando ? (
           <div className="py-24 text-center text-sm" style={{ color: BRAND.textoSuave }}>Carregando dados…</div>
         ) : !cadastros ? null : aba === "dashboard" ? (
           <>
-            <div className="flex items-start justify-between mb-8 flex-wrap gap-3">
+            <div className="flex items-start justify-between mb-6 sm:mb-8 flex-wrap gap-3">
               <div>
-                <h1 className="vd-display text-3xl mb-1">Panorama do turismo</h1>
+                <h1 className="vd-display text-2xl sm:text-3xl mb-1">Panorama do turismo</h1>
                 <p className="text-sm" style={{ color: BRAND.textoSuave }}>Dados da pesquisa de visitantes e dos lançamentos do Conselho.</p>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs" style={{ background: "rgba(11,122,84,0.25)" }}>
@@ -707,22 +813,22 @@ function PainelLogado({ email }) {
           </>
         ) : aba === "lancamentos" ? (
           <>
-            <div className="mb-8">
-              <h1 className="vd-display text-3xl mb-1">Lançamentos</h1>
+            <div className="mb-6 sm:mb-8">
+              <h1 className="vd-display text-2xl sm:text-3xl mb-1">Lançamentos</h1>
               <p className="text-sm" style={{ color: BRAND.textoSuave }}>Ocupação mensal dos meios de hospedagem e números dos eventos.</p>
             </div>
             <Lancamentos cadastros={cadastros} onSalvo={(tipo, lista) => setDados((d) => ({ ...d, [tipo]: lista }))} />
           </>
         ) : (
           <>
-            <div className="mb-6"><h1 className="vd-display text-3xl mb-1">Cadastros</h1></div>
+            <div className="mb-6"><h1 className="vd-display text-2xl sm:text-3xl mb-1">Cadastros</h1></div>
             <Cadastros cadastros={cadastros} setCadastros={setCadastros} />
           </>
         )}
       </main>
 
-      <footer className="max-w-6xl mx-auto px-5 pb-10 flex items-center gap-2 text-xs" style={{ color: BRAND.textoSuave }}>
-        <Info size={13} /> Uso interno do Conselho Municipal de Turismo. Os dados de visitantes vêm da pesquisa pública.
+      <footer className="vd-rodape max-w-6xl mx-auto px-4 sm:px-5 pb-10 flex items-start gap-2 text-xs" style={{ color: BRAND.textoSuave }}>
+        <Info size={13} className="shrink-0 mt-px" /> Uso interno do Conselho Municipal de Turismo. Os dados de visitantes vêm da pesquisa pública.
       </footer>
     </>
   );

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 import { BRAND } from "../lib/tema";
 
 export const UFS = [
@@ -209,36 +209,133 @@ export function Campo({ campo, valor, onChange, dados, set, erro, options }) {
   );
 }
 
+// Tira acentos e caixa para a busca ("sao joao" encontra "São João").
+function normalizar(t) {
+  return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+// Campo de busca com lista própria — funciona igual em todos os estados e no
+// celular (o <datalist> do navegador não aparece na maioria dos celulares).
 function CampoMunicipio({ campo, valor, onChange, uf, invalido }) {
   const { lista, carregando, falhou } = useMunicipios(uf);
+  const [aberto, setAberto] = useState(false);
+  const [destaque, setDestaque] = useState(0);
+  const ref = useRef(null);
+  const listaRef = useRef(null);
+
+  useEffect(() => {
+    function aoClicarFora(e) {
+      if (ref.current && !ref.current.contains(e.target)) setAberto(false);
+    }
+    document.addEventListener("mousedown", aoClicarFora);
+    document.addEventListener("touchstart", aoClicarFora);
+    return () => {
+      document.removeEventListener("mousedown", aoClicarFora);
+      document.removeEventListener("touchstart", aoClicarFora);
+    };
+  }, []);
+
+  const filtrados = useMemo(() => {
+    const q = normalizar(valor);
+    if (!q || lista.includes(valor)) return lista;
+    const comeca = [];
+    const contem = [];
+    lista.forEach((m) => {
+      const n = normalizar(m);
+      if (n.startsWith(q)) comeca.push(m);
+      else if (n.includes(q)) contem.push(m);
+    });
+    return [...comeca, ...contem];
+  }, [lista, valor]);
+
+  useEffect(() => { setDestaque(0); }, [valor, uf]);
+
+  useEffect(() => {
+    const item = listaRef.current?.children[destaque];
+    if (item) item.scrollIntoView({ block: "nearest" });
+  }, [destaque]);
+
   if (!uf) {
     return <p className="text-sm" style={{ color: BRAND.textoSuave }}>Escolha o estado primeiro.</p>;
   }
-  // Até 120 municípios: lista suspensa. Acima disso: campo com busca.
-  if (!falhou && lista.length && lista.length <= 120) {
-    return (
-      <select id={campo.id} className="vd-input vd-focus" aria-invalid={invalido} value={valor} onChange={(e) => onChange(e.target.value)}>
-        <option value="">Selecione…</option>
-        {lista.map((m) => <option key={m} value={m}>{m}</option>)}
-      </select>
-    );
+
+  function escolher(m) {
+    onChange(m);
+    setAberto(false);
   }
+
+  // Ao sair do campo, se o texto bate com um único município (sem acento), completa o nome certo.
+  function aoSair() {
+    if (!valor || lista.includes(valor)) return;
+    const q = normalizar(valor);
+    const exato = lista.find((m) => normalizar(m) === q);
+    if (exato) onChange(exato);
+  }
+
+  function aoTeclar(e) {
+    if (!lista.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setAberto(true); setDestaque((d) => Math.min(d + 1, filtrados.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setDestaque((d) => Math.max(d - 1, 0)); }
+    else if (e.key === "Enter" && aberto && filtrados[destaque]) { e.preventDefault(); escolher(filtrados[destaque]); }
+    else if (e.key === "Escape") setAberto(false);
+  }
+
+  const idLista = `${campo.id}-lista`;
+  const mostrarLista = aberto && !falhou && lista.length > 0;
+
   return (
-    <>
-      <input
-        id={campo.id}
-        className="vd-input vd-focus"
-        list={`${campo.id}-lista`}
-        placeholder={carregando ? "Carregando municípios…" : "Digite para buscar"}
-        aria-invalid={invalido}
-        value={valor}
-        onChange={(e) => onChange(e.target.value)}
-        autoComplete="off"
-      />
-      <datalist id={`${campo.id}-lista`}>
-        {lista.map((m) => <option key={m} value={m} />)}
-      </datalist>
-    </>
+    <div className="vd-multiselect" ref={ref}>
+      <div className="vd-busca">
+        <Search size={16} className="vd-busca-icone" aria-hidden="true" />
+        <input
+          id={campo.id}
+          className="vd-input vd-focus vd-busca-input"
+          type="text"
+          role="combobox"
+          aria-expanded={mostrarLista}
+          aria-controls={idLista}
+          aria-autocomplete="list"
+          aria-invalid={invalido}
+          placeholder={carregando ? "Carregando municípios…" : falhou ? "Digite o nome do município" : `Buscar entre ${lista.length} municípios`}
+          value={valor}
+          onChange={(e) => { onChange(e.target.value); setAberto(true); }}
+          onFocus={() => setAberto(true)}
+          onBlur={aoSair}
+          onKeyDown={aoTeclar}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="done"
+        />
+        {valor && (
+          <button type="button" className="vd-busca-limpar vd-focus" aria-label="Limpar município" onClick={() => { onChange(""); setAberto(true); ref.current?.querySelector("input")?.focus(); }}>
+            <X size={15} />
+          </button>
+        )}
+      </div>
+      {mostrarLista && (
+        <div className="vd-multiselect-painel" role="listbox" id={idLista} ref={listaRef}>
+          {filtrados.length === 0 ? (
+            <div className="vd-busca-vazio">Nenhum município encontrado em {uf}.</div>
+          ) : (
+            filtrados.map((m, i) => (
+              <div
+                key={m}
+                role="option"
+                aria-selected={m === valor}
+                className="vd-multiselect-item"
+                data-active={m === valor}
+                data-destaque={i === destaque}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => escolher(m)}
+              >
+                {m}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

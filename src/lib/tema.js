@@ -93,6 +93,13 @@ export const STYLE_TAG = `
   .vd-multiselect-item[data-active="true"] .vd-multiselect-check { background: ${BRAND.azul}; border-color: ${BRAND.azul}; }
   .vd-multiselect-rodape { display: flex; justify-content: flex-end; padding: 6px 4px 2px; border-top: 1px solid #EFE9DC; margin-top: 4px; }
   .vd-multiselect-fechar { font-size: 13px; font-weight: 600; color: ${BRAND.azul}; background: none; border: none; cursor: pointer; padding: 6px 8px; }
+  .vd-busca { position: relative; }
+  .vd-busca-icone { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8A8578; pointer-events: none; }
+  input.vd-input.vd-busca-input { padding-left: 36px; padding-right: 40px; }
+  .vd-busca-limpar { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: none; color: #8A8578; border-radius: 8px; cursor: pointer; }
+  .vd-busca-vazio { padding: 12px 10px; font-size: 14px; color: #8A8578; }
+  .vd-multiselect-item[data-destaque="true"] { background: #F7F2E7; }
+  .vd-multiselect-item[role="option"][data-active="true"] { font-weight: 600; color: ${BRAND.azul}; }
   .vd-root .bg-white {
     background: ${BRAND.vidro} !important;
     backdrop-filter: blur(16px);
