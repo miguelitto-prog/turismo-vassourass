@@ -165,3 +165,95 @@ export const CADASTROS_PADRAO = {
   ],
   eventos: [],
 };
+
+// ---------------------------------------------------------------------------
+// Página "O Conselho": membros e documentos (tabelas próprias no Supabase)
+// Arquivos (fotos e PDFs) vão para o Storage, na pasta pública "comtur".
+// ---------------------------------------------------------------------------
+export const BUCKET_CONSELHO = "comtur";
+
+export const TIPOS_DOCUMENTO = [
+  ["ata", "Ata"],
+  ["deliberacao", "Deliberação / Resolução"],
+  ["lei", "Lei"],
+  ["decreto", "Decreto"],
+  ["regimento", "Regimento"],
+  ["apresentacao", "Apresentação"],
+  ["outro", "Outro documento"],
+];
+
+export const CARGOS_DIRETORIA = ["Presidente", "Vice-Presidente", "1º Secretário", "1ª Secretária", "2º Secretário", "2ª Secretária"];
+
+export async function carregarMembros() {
+  const { data, error } = await supabase.from("conselho_membros").select("*").order("ordem").order("nome");
+  if (error) throw error;
+  return data || [];
+}
+
+export async function salvarMembro(membro) {
+  const { id, criado_em: _criado, ...campos } = membro;
+  const q = id ? supabase.from("conselho_membros").update(campos).eq("id", id) : supabase.from("conselho_membros").insert(campos);
+  const { data, error } = await q.select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function removerMembro(id) {
+  const { error } = await supabase.from("conselho_membros").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function carregarDocumentos() {
+  const { data, error } = await supabase.from("conselho_documentos").select("*")
+    .order("data", { ascending: false, nullsFirst: false }).order("criado_em", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function salvarDocumento(doc) {
+  const { id, criado_em: _criado, ...campos } = doc;
+  const q = id ? supabase.from("conselho_documentos").update(campos).eq("id", id) : supabase.from("conselho_documentos").insert(campos);
+  const { data, error } = await q.select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function removerDocumento(doc) {
+  const { error } = await supabase.from("conselho_documentos").delete().eq("id", doc.id);
+  if (error) throw error;
+  if (doc.arquivo) await supabase.storage.from(BUCKET_CONSELHO).remove([doc.arquivo]).catch(() => {});
+}
+
+function nomeSeguro(nome) {
+  return String(nome).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "arquivo";
+}
+
+// Envia um arquivo e devolve { caminho, url } públicos.
+export async function enviarArquivo(pasta, arquivo, nomeBase) {
+  const ext = (arquivo.name.split(".").pop() || "bin").toLowerCase();
+  const caminho = `${pasta}/${Date.now().toString(36)}-${nomeSeguro(nomeBase || arquivo.name.replace(/\.[^.]+$/, ""))}.${ext}`;
+  const { error } = await supabase.storage.from(BUCKET_CONSELHO).upload(caminho, arquivo, {
+    contentType: arquivo.type || undefined, upsert: false, cacheControl: "3600",
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from(BUCKET_CONSELHO).getPublicUrl(caminho);
+  return { caminho, url: data.publicUrl };
+}
+
+// Reduz fotos grandes de celular para no máximo 800 px (JPEG), antes do envio.
+export async function reduzirFoto(arquivo, max = 800) {
+  if (!arquivo.type.startsWith("image/") || arquivo.type === "image/svg+xml") return arquivo;
+  try {
+    const bitmap = await createImageBitmap(arquivo);
+    const escala = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * escala);
+    canvas.height = Math.round(bitmap.height * escala);
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((ok) => canvas.toBlob(ok, "image/jpeg", 0.85));
+    return blob ? new File([blob], "foto.jpg", { type: "image/jpeg" }) : arquivo;
+  } catch {
+    return arquivo;
+  }
+}

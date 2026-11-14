@@ -14,6 +14,9 @@ com os dados salvos no Supabase.
 - **Lançamentos**: ocupação mensal dos hotéis/pousadas e números dos eventos.
 - **Cadastros**: atrativos, hotéis/pousadas e eventos. O que for cadastrado
   aparece sozinho nas opções da pesquisa e nas páginas do site.
+- **Conselho**: publica atas, leis, decretos, regimento, deliberações e
+  apresentações (envio de PDF ou link) e cadastra a composição do Conselho
+  com fotos. Tudo aparece sozinho na página "O Conselho" do site.
 - **Exportar Excel**: baixa uma planilha com todas as respostas,
   lançamentos, cadastros e a lista de e-mails.
 
@@ -34,6 +37,11 @@ No Supabase, abra **SQL Editor → New query**, cole todo o conteúdo de
 `supabase.sql` e clique em **Run**. O script cria a tabela de e-mails e troca
 as regras de acesso: visitantes só conseguem enviar respostas; ler e editar
 os dados exige login.
+
+O mesmo script cria as tabelas `conselho_membros` e `conselho_documentos`,
+a pasta de arquivos `comtur` (Storage) e já preenche a composição do
+Decreto nº 6.240/2026 e os documentos atuais. Os dados iniciais só entram
+se as tabelas estiverem vazias, então rodar de novo não duplica nada.
 
 ### 2. Usuários do painel
 

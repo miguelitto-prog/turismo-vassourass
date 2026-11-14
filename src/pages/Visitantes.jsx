@@ -17,7 +17,7 @@ const OPCOES = {
   comQuemViaja: ["Sozinho(a)", "Em casal", "Em família", "Com amigos", "Em grupo organizado/excursão"],
   tipoHospedagem: ["Hotel", "Pousada", "Casa de familiares/amigos", "Airbnb/aluguel por temporada", "Bate-volta (sem pernoite)", "Outro"],
   ondeGastar: ["Alimentação", "Hospedagem", "Compras / artesanato", "Atrativos turísticos", "Transporte local"],
-  aquisicaoIngressos: ["Compra no local", "Compra antecipada online", "Incluso em pacote turístico", "Não se aplica"],
+  aquisicaoIngressos: ["Compra no local", "Compra no Receptivo Local", "Compra antecipada online", "Incluso em pacote turístico", "Não se aplica"],
   avaliacao: ["1 – Muito ruim", "2 – Ruim", "3 – Regular", "4 – Boa", "5 – Excelente"],
   comoSoube: ["Indicação de amigos/família", "Redes sociais", "Internet / Google", "Evento", "TV, rádio ou jornal", "Agência de turismo", "Outro"],
 };

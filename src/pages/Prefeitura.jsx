@@ -4,8 +4,9 @@ import {
 } from "recharts";
 import {
   Users, Building2, PartyPopper, LayoutDashboard, ClipboardList, Check, TrendingUp,
-  Compass, Wallet, Info, Download, LogOut, ListChecks, Plus, Trash2, Eye, EyeOff, Pencil, X,
+  Compass, Wallet, Info, Download, LogOut, ListChecks, Plus, Trash2, Eye, EyeOff, Pencil, X, Landmark,
 } from "lucide-react";
+import Conselho from "./Conselho";
 import { BRASAO_IMG } from "../assets/imagens";
 import { BRAND, CORES_GRAFICO, STYLE_TAG } from "../lib/tema";
 import { supabase } from "../lib/supabaseClient";
@@ -666,7 +667,7 @@ const ESTILO_PAINEL = `
   .vd-lista-cel li + li { border-top: 1px solid rgba(247,242,231,0.12); }
   .vd-abas-cel {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
-    display: grid; grid-template-columns: repeat(3, 1fr);
+    display: grid; grid-template-columns: repeat(4, 1fr);
     background: rgba(4,12,10,0.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border-top: 1px solid rgba(247,242,231,0.14);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -749,6 +750,7 @@ function PainelLogado({ email }) {
     ["dashboard", "Painel", LayoutDashboard],
     ["lancamentos", "Lançamentos", ClipboardList],
     ["cadastros", "Cadastros", ListChecks],
+    ["conselho", "Conselho", Landmark],
   ];
 
   return (
@@ -818,6 +820,11 @@ function PainelLogado({ email }) {
               <p className="text-sm" style={{ color: BRAND.textoSuave }}>Ocupação mensal dos meios de hospedagem e números dos eventos.</p>
             </div>
             <Lancamentos cadastros={cadastros} onSalvo={(tipo, lista) => setDados((d) => ({ ...d, [tipo]: lista }))} />
+          </>
+        ) : aba === "conselho" ? (
+          <>
+            <div className="mb-6"><h1 className="vd-display text-2xl sm:text-3xl mb-1">Conselho</h1></div>
+            <Conselho />
           </>
         ) : (
           <>
