@@ -6,7 +6,6 @@ import {
   Users, Building2, PartyPopper, LayoutDashboard, ClipboardList, Check, TrendingUp,
   Compass, Wallet, Info, Download, LogOut, ListChecks, Plus, Trash2, Eye, EyeOff, Pencil, X, Landmark,
 } from "lucide-react";
-import Conselho from "./Conselho";
 import { BRASAO_IMG } from "../assets/imagens";
 import { BRAND, CORES_GRAFICO, STYLE_TAG } from "../lib/tema";
 import { supabase } from "../lib/supabaseClient";
@@ -15,6 +14,7 @@ import {
   carregarContatos, novoId, CATEGORIAS_ATRATIVO, TIPOS_HOSPEDAGEM,
 } from "../lib/dados";
 import { Campo, formatarReais } from "../components/Campo";
+import Conselho from "../components/Conselho";
 
 const CARTAO = { border: "1px solid rgba(247,242,231,0.14)" };
 
